@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-
+import axios from "axios";
 import authors from "./data.js";
 
 // Components
@@ -10,7 +10,20 @@ import AuthorDetail from "./AuthorDetail";
 class App extends Component {
   state = {
     currentAuthor: null,
-    filteredAuthors: authors
+    filteredAuthors: authors,
+    authors: [],
+    loading: true
+  };
+
+  handleFetch = async () => {
+    try {
+      let response = await axios.get(
+        "https://the-index-api.herokuapp.com/api/authors/"
+      );
+      this.setState({ authors: response.data });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   selectAuthor = author => this.setState({ currentAuthor: author });
@@ -33,7 +46,7 @@ class App extends Component {
     } else {
       return (
         <AuthorsList
-          authors={this.state.filteredAuthors}
+          authors={this.state.authors}
           selectAuthor={this.selectAuthor}
           filterAuthors={this.filterAuthors}
         />
@@ -42,6 +55,7 @@ class App extends Component {
   };
 
   render() {
+    this.handleFetch();
     return (
       <div id="app" className="container-fluid">
         <div className="row">
