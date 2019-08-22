@@ -1,16 +1,16 @@
 import React, { Component } from "react";
 import axios from "axios";
-import authors from "./data.js";
 
 // Components
 import Sidebar from "./Sidebar";
 import AuthorsList from "./AuthorsList";
 import AuthorDetail from "./AuthorDetail";
+import Loading from "./Loading";
 
 class App extends Component {
   state = {
     currentAuthor: null,
-    filteredAuthors: authors,
+    filteredAuthors: [],
     authors: [],
     loading: true
   };
@@ -26,13 +26,19 @@ class App extends Component {
     }
   };
 
-  selectAuthor = author => this.setState({ currentAuthor: author });
-
+  selectAuthor = async author => {
+    this.setState({ loading: true });
+    let response = await axios.get(
+      `https://the-index-api.herokuapp.com/api/authors/${author.id}/`
+    );
+    this.setState({ currentAuthor: response.data });
+    this.setState({ loading: false });
+  };
   unselectAuthor = () => this.setState({ currentAuthor: null });
 
   filterAuthors = query => {
     query = query.toLowerCase();
-    let filteredAuthors = authors.filter(author => {
+    let filteredAuthors = this.state.authors.filter(author => {
       return `${author.first_name} ${author.last_name}`
         .toLowerCase()
         .includes(query);
@@ -41,19 +47,30 @@ class App extends Component {
   };
 
   getContentView = () => {
+    if (this.state.loading) {
+      return <Loading />;
+    }
     if (this.state.currentAuthor) {
       return <AuthorDetail author={this.state.currentAuthor} />;
     } else {
       return (
         <AuthorsList
-          authors={this.state.authors}
+          authors={this.state.filteredAuthors}
           selectAuthor={this.selectAuthor}
           filterAuthors={this.filterAuthors}
         />
       );
     }
   };
-
+  async componentDidMount() {
+    let response = await axios.get(
+      "https://the-index-api.herokuapp.com/api/authors/"
+    );
+    let authors = response.data;
+    this.setState({ authors: authors });
+    this.setState({ filteredAuthors: authors });
+    this.setState({ loading: false });
+  }
   render() {
     this.handleFetch();
     return (
